@@ -1,5 +1,6 @@
+from django.db.models import Q
+from django.http.response import Http404
 from django.shortcuts import render
-from utils.recipes.factory import make_recipe
 
 from recipes.models import Recipe
 
@@ -12,6 +13,7 @@ def home(request):
     return render(request, 'recipes/pages/home.html', context={
         'recipes': recipes,
     })
+    
 
 def category(request, category_id):
     recipes = Recipe.objects.filter(
@@ -33,5 +35,22 @@ def recipe(request, id):
     return render(request, 'recipes/pages/recipe-view.html', context={
         'recipe': recipe,
         'is_detail_page': True,
+    })
+
+
+def search(request):
+    search_term = request.GET.get('search', '').strip()
+
+    if not search_term:
+        raise Http404()
+
+    recipes = Recipe.objects.filter(
+        Q(title__icontains=search_term) | 
+        Q(description__icontains=search_term) # verificar uma receita cujo título ou descrição contenha o valor de search_term
+    ).order_by('-id')
+        
+    return render(request, 'recipes/pages/search.html', context={
+        'page_title': f'Search for "{search_term}" |',
+        'recipes': recipes,
     })
     
